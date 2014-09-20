@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Weight Loss App</title>
+  <meta charset="utf-8">
+  <meta name="description" content="Weight Loss App">
+  <meta name="author" content="Seth Weidman">
+  <meta name="generator" content="slidify" />
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta http-equiv="X-UA-Compatible" content="chrome=1">
+  <link rel="stylesheet" href="libraries/frameworks/io2012/css/default.css" media="all" >
+  <link rel="stylesheet" href="libraries/frameworks/io2012/css/phone.css" 
+    media="only screen and (max-device-width: 480px)" >
+  <link rel="stylesheet" href="libraries/frameworks/io2012/css/slidify.css" >
+  <link rel="stylesheet" href="libraries/highlighters/highlight.js/css/tomorrow.css" />
+  <base target="_blank"> <!-- This amazingness opens all links in a new tab. -->  <link rel=stylesheet href="./assets/css/ribbons.css"></link>
+
+  
+  <!-- Grab CDN jQuery, fall back to local if offline -->
+  <script src="http://ajax.aspnetcdn.com/ajax/jQuery/jquery-1.7.min.js"></script>
+  <script>window.jQuery || document.write('<script src="libraries/widgets/quiz/js/jquery.js"><\/script>')</script> 
+  <script data-main="libraries/frameworks/io2012/js/slides" 
+    src="libraries/frameworks/io2012/js/require-1.0.8.min.js">
+  </script>
+  
+  
+
+</head>
+<body style="opacity: 0">
+  <slides class="layout-widescreen">
+    
+    <!-- LOGO SLIDE -->
+        <slide class="title-slide segue nobackground">
+  <hgroup class="auto-fadein">
+    <h1>Weight Loss App</h1>
+    <h2></h2>
+    <p>Seth Weidman<br/></p>
+  </hgroup>
+  <article></article>  
+</slide>
+    
+
+    <!-- SLIDES -->
+    <slide class="" id="slide-1" style="background:;">
+  <hgroup>
+    <h2>Motivation for the weight loss app</h2>
+  </hgroup>
+  <article data-timings="">
+    <p>Suppose you want to lose a lot of weight--say, 20 pounds by Christmas. </p>
+
+<p>Why might you have trouble?</p>
+
+<p><strong>Because it&#39;s hard!</strong></p>
+
+<p>What would make it easier?</p>
+
+<p>Having a series of intermediate goals to motivate you.</p>
+
+<p>This app gives you a series of easier-to-hit, intermediate goals to help you <strong>achieve your dreams!</strong>.</p>
+
+  </article>
+  <!-- Presenter Notes -->
+</slide>
+
+<slide class="class" id="id" style="background:;">
+  <hgroup>
+    <h2>Steps to use the app</h2>
+  </hgroup>
+  <article data-timings="">
+    <ol>
+<li>Input what day you would like to achieve your goal by.</li>
+<li>Say how much you currently weigh</li>
+<li>Say how much weight you would like to lose</li>
+<li>Say which days of the week you would like to check in on</li>
+</ol>
+
+<p><strong>The output will be a series of goals to hit along the way to your ultimate weight loss goal!</strong></p>
+
+  </article>
+  <!-- Presenter Notes -->
+</slide>
+
+<slide class="class" id="id" style="background:;">
+  <hgroup>
+    <h2>Example</h2>
+  </hgroup>
+  <article data-timings="">
+    <p>You want to lose 30 lbs by Halloween, and you currently weight 230. Here&#39;s what your output would look like:</p>
+
+<p><img src="figures/WeightLoss3.png" alt="Weight Loss"></p>
+
+  </article>
+  <!-- Presenter Notes -->
+</slide>
+
+<slide class="class" id="id" style="background:;">
+  <hgroup>
+    <h2>The underlying code: ui.r</h2>
+  </hgroup>
+  <article data-timings="">
+    <pre><code class="r">shinyUI(pageWithSidebar(
+  headerPanel(&quot;Weight loss app&quot;),
+  sidebarPanel(
+    numericInput(&#39;currentWeight&#39;,&quot;What is your current weight?&quot;,0,min=0,max=500,step=1),
+    numericInput(&#39;weightLoss&#39;,&quot;How many pounds would you like to lose?&quot;,0,min=0,max=500,step=1),
+    dateInput(&quot;goalDate&quot;,&quot;By when would you like to lose this weight?&quot;),
+    radioButtons(&quot;weekday&quot;,label=&quot;Day of week to check in&quot;,
+                 choices = list(&quot;Monday&quot; = &quot;Monday&quot;,&quot;Tuesday&quot; = &quot;Tuesday&quot;,&quot;Wednesday&quot; = &quot;Wednesday&quot;,
+                                &quot;Thursday&quot; = &quot;Thursday&quot;,&quot;Friday&quot; = &quot;Friday&quot;,&quot;Saturday&quot; = &quot;Saturday&quot;,
+                                &quot;Sunday&quot; = &quot;Sunday&quot;),
+                 selected = &quot;Monday&quot;)
+    ), 
+  mainPanel(
+    h3(&quot;Your schedule for losing weight is:&quot;),
+    dataTableOutput(&quot;goalTableFinal&quot;)
+    )
+))
+</code></pre>
+
+<pre><code>## Error: could not find function &quot;shinyUI&quot;
+</code></pre>
+
+  </article>
+  <!-- Presenter Notes -->
+</slide>
+
+<slide class="class" id="id" style="background:;">
+  <hgroup>
+    <h2>The underlying code: server.r</h2>
+  </hgroup>
+  <article data-timings="">
+    <pre><code class="r">goalTable &lt;- function(currentWeight,weightLoss,goalDate,weekday) {
+  goalWeight &lt;- currentWeight - weightLoss
+  currentDate &lt;- Sys.Date()
+  goalDate &lt;- as.Date(goalDate)
+  daysUntilGoal &lt;- as.numeric(difftime(goalDate,currentDate,units=&quot;days&quot;))
+  poundsPerDay &lt;- weightLoss/daysUntilGoal
+  goalTable &lt;- data.frame(date = as.Date(rep(Sys.Date(),daysUntilGoal)),
+                          weight = rep(currentWeight,daysUntilGoal),
+                          weekdays = weekdays(as.Date(rep(Sys.Date(),daysUntilGoal))),
+                          stringsAsFactors = FALSE)
+  for (i in 1:daysUntilGoal) {
+    goalTable[i,1] &lt;- as.Date(currentDate + i)
+    goalTable[i,2] &lt;- round(currentWeight - i*poundsPerDay,1)
+    goalTable[i,3] &lt;- weekdays(goalTable[i,1])
+  }
+  goalTableFinal &lt;- subset(goalTable,weekdays==weekday | date==goalDate)
+  goalTableFinal
+}
+
+shinyServer(
+  function(input, output) {
+    output$goalTableFinal &lt;- renderDataTable({goalTable(input$currentWeight,input$weightLoss,input$goalDate,input$weekday)}) 
+  }
+)
+</code></pre>
+
+<pre><code>## Error: could not find function &quot;shinyServer&quot;
+</code></pre>
+
+  </article>
+  <!-- Presenter Notes -->
+</slide>
+
+    <slide class="backdrop"></slide>
+  </slides>
+  <div class="pagination pagination-small" id='io2012-ptoc' style="display:none;">
+    <ul>
+      <li>
+      <a href="#" target="_self" rel='tooltip' 
+        data-slide=1 title='Motivation for the weight loss app'>
+         1
+      </a>
+    </li>
+    <li>
+      <a href="#" target="_self" rel='tooltip' 
+        data-slide=2 title='Steps to use the app'>
+         2
+      </a>
+    </li>
+    <li>
+      <a href="#" target="_self" rel='tooltip' 
+        data-slide=3 title='Example'>
+         3
+      </a>
+    </li>
+    <li>
+      <a href="#" target="_self" rel='tooltip' 
+        data-slide=4 title='The underlying code: ui.r'>
+         4
+      </a>
+    </li>
+    <li>
+      <a href="#" target="_self" rel='tooltip' 
+        data-slide=5 title='The underlying code: server.r'>
+         5
+      </a>
+    </li>
+  </ul>
+  </div>  <!--[if IE]>
+    <script 
+      src="http://ajax.googleapis.com/ajax/libs/chrome-frame/1/CFInstall.min.js">  
+    </script>
+    <script>CFInstall.check({mode: 'overlay'});</script>
+  <![endif]-->
+</body>
+  <!-- Load Javascripts for Widgets -->
+  
+  <!-- LOAD HIGHLIGHTER JS FILES -->
+  <script src="libraries/highlighters/highlight.js/highlight.pack.js"></script>
+  <script>hljs.initHighlightingOnLoad();</script>
+  <!-- DONE LOADING HIGHLIGHTER JS FILES -->
+   
+  </html>
